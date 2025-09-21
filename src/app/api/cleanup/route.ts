@@ -4,15 +4,18 @@ import { supabase } from "@/lib/supabase";
 // Helper function to check if user is admin
 async function checkAdminStatus(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
       return false;
     }
 
     const token = authHeader.substring(7);
 
     // Verify the token with Supabase
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
       return false;

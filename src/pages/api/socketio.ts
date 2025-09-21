@@ -126,7 +126,11 @@ const ioHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
 
         Object.keys(seatsData).forEach((seatId) => {
           const seat = seatsData[seatId];
-          if (seat.status === "reserved" && seat.expiresAt && seat.expiresAt < now) {
+          if (
+            seat.status === "reserved" &&
+            seat.expiresAt &&
+            seat.expiresAt < now
+          ) {
             delete seatsData[seatId];
             hasExpired = true;
           }

@@ -4,8 +4,8 @@ import { supabase } from "@/lib/supabase";
 // GET /api/admin/check - Check if current user is admin
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
         { error: "No authorization token provided" },
         { status: 401 }
@@ -15,13 +15,13 @@ export async function GET(request: NextRequest) {
     const token = authHeader.substring(7);
 
     // Verify the token with Supabase
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: "Invalid token" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
     // For now, check if email ends with mahindrauniversity.edu.in

@@ -82,7 +82,7 @@ export default function ShowDetailPage() {
 
         const response = await fetch("/api/admin/check", {
           headers: {
-            'Authorization': `Bearer ${session.data.session.access_token}`,
+            Authorization: `Bearer ${session.data.session.access_token}`,
           },
         });
 
@@ -385,8 +385,12 @@ export default function ShowDetailPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {(() => {
-                                const seat = seats.find(s => s.id === booking.seat_id);
-                                return seat ? `${seat.row}${seat.number}` : 'N/A';
+                                const seat = seats.find(
+                                  (s) => s.id === booking.seat_id
+                                );
+                                return seat
+                                  ? `${seat.row}${seat.number}`
+                                  : "N/A";
                               })()}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

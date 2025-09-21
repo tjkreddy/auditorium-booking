@@ -85,7 +85,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, name?: string) => {
     // Validate email domain server-side
     if (!email.endsWith("@mahindrauniversity.edu.in")) {
-      return { error: { message: "Only @mahindrauniversity.edu.in email addresses are allowed" } as AuthError };
+      return {
+        error: {
+          message:
+            "Only @mahindrauniversity.edu.in email addresses are allowed",
+        } as AuthError,
+      };
     }
 
     // For development, disable email confirmation
@@ -104,7 +109,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     // Validate email domain server-side
     if (!email.endsWith("@mahindrauniversity.edu.in")) {
-      return { error: { message: "Only @mahindrauniversity.edu.in email addresses are allowed" } as AuthError };
+      return {
+        error: {
+          message:
+            "Only @mahindrauniversity.edu.in email addresses are allowed",
+        } as AuthError,
+      };
     }
 
     const { error } = await supabase.auth.signInWithPassword({

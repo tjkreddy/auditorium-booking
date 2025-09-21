@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate that all seats belong to the same show
-    const showIds = [...new Set(seats.map(seat => seat.show_id))];
+    const showIds = [...new Set(seats.map((seat) => seat.show_id))];
     if (showIds.length > 1) {
       return NextResponse.json(
         { error: "All seats must belong to the same show" },
@@ -112,10 +112,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate total amount
-    const totalAmount = seats.reduce(
-      (sum, seat) => sum + (seat.price || 0),
-      0
-    );
+    const totalAmount = seats.reduce((sum, seat) => sum + (seat.price || 0), 0);
 
     // Get the show ID (assuming all seats are from the same show)
     const showId = seats[0].show_id;
