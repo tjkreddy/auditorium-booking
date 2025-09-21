@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 // GET /api/seats?showId=123 - Get seats for a specific show
 export async function GET(request: NextRequest) {
@@ -14,7 +14,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data: seats, error } = await supabase
+    // Clean up expired reservations before fetching seats
+    const now = new Date().toISOString();
+    await supabaseAdmin
+      .from("seats")
+      .update({
+        status: "available",
+        user_id: null,
+        reserved_at: null,
+        expires_at: null,
+      })
+      .eq("status", "reserved")
+      .lt("expires_at", now);
+
+    const { data: seats, error } = await supabaseAdmin
       .from("seats")
       .select("*")
       .eq("show_id", showId)
@@ -61,19 +74,43 @@ export async function POST(request: NextRequest) {
 
     // Calculate expiry time (5 minutes from now)
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+    const now = new Date().toISOString();
 
-    // Update seats to reserved status
-    const { data: seats, error } = await supabase
+    // First, clean up any expired reservations
+    await supabaseAdmin
+      .from("seats")
+      .update({
+        status: "available",
+        user_id: null,
+        reserved_at: null,
+        expires_at: null,
+      })
+      .eq("status", "reserved")
+      .lt("expires_at", now);
+
+    // Check current status of requested seats before attempting reservation
+    const { data: currentSeats } = await supabaseAdmin
+      .from("seats")
+      .select("id, status, user_id, reserved_at, expires_at")
+      .in("id", seatIds);
+
+    console.log("Requested seat IDs:", seatIds);
+    console.log("Current seat statuses:", currentSeats);
+
+    // Update seats to reserved status (only available seats after cleanup)
+    const { data: seats, error } = await supabaseAdmin
       .from("seats")
       .update({
         status: "reserved",
         user_id: userId,
-        reserved_at: new Date().toISOString(),
+        reserved_at: now,
         expires_at: expiresAt,
       })
       .in("id", seatIds)
-      .eq("status", "available") // Only reserve if currently available
-      .select();
+      .eq("status", "available") // Only available seats
+      .select("*");
+
+    console.log("Update result:", { seats, error, seatIds });
 
     if (error) {
       console.error("Error reserving seats:", error);
@@ -85,6 +122,18 @@ export async function POST(request: NextRequest) {
 
     if (seats.length !== seatIds.length) {
       // Some seats were not available
+      console.log("Reservation failed:");
+      console.log("- Requested seats:", seatIds.length);
+      console.log("- Reserved seats:", seats.length);
+      console.log(
+        "- Reserved seat IDs:",
+        seats.map((s) => s.id)
+      );
+      console.log(
+        "- Failed seat IDs:",
+        seatIds.filter((id) => !seats.find((s) => s.id === id))
+      );
+
       return NextResponse.json(
         {
           error: "Some seats are no longer available",

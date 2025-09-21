@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 // Helper function to check if user is admin
 async function checkAdminStatus(request: NextRequest) {
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { error } = await supabase.rpc("cleanup_expired_reservations");
+    const { error } = await supabaseAdmin.rpc("cleanup_expired_reservations");
 
     if (error) {
       console.error("Error cleaning up expired reservations:", error);

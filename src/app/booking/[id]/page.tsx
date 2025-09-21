@@ -33,6 +33,12 @@ export default function BookingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleRefreshSeats = () => {
+    setRefreshKey((prev) => prev + 1);
+    setError(""); // Clear any error messages
+  };
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
   useEffect(() => {
@@ -87,6 +93,16 @@ export default function BookingPage() {
       });
 
       if (!reserveResponse.ok) {
+        if (reserveResponse.status === 409) {
+          // Some seats are no longer available
+          const errorData = await reserveResponse.json();
+          setError(
+            `Some seats are no longer available. Only ${errorData.totalReserved} of ${errorData.totalRequested} seats could be reserved. Please select different seats.`
+          );
+          // Clear selected seats that couldn't be reserved
+          setSelectedSeats([]);
+          return; // Don't proceed with booking
+        }
         const errorData = await reserveResponse.json();
         throw new Error(errorData.error || "Failed to reserve seats");
       }
@@ -162,13 +178,21 @@ export default function BookingPage() {
         <header className="bg-white shadow-sm">
           <div className="container mx-auto px-4 py-4 flex justify-between items-center">
             <h1 className="text-2xl font-bold text-red-600">MU Audi Booking</h1>
-            <Link
-              href="/shows"
-              className="flex items-center text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="mr-2" size={16} />
-              Back to Shows
-            </Link>
+            <div className="flex items-center space-x-4">
+              <Link
+                href="/bookings"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm"
+              >
+                My Bookings
+              </Link>
+              <Link
+                href="/shows"
+                className="flex items-center text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="mr-2" size={16} />
+                Back to Shows
+              </Link>
+            </div>
           </div>
         </header>
 
@@ -204,6 +228,7 @@ export default function BookingPage() {
           <div className="w-full">
             {/* Seating Chart */}
             <AuditoriumSeating
+              key={refreshKey}
               selectedSeats={selectedSeats}
               onSeatSelect={handleSeatSelect}
               onSeatDeselect={handleSeatDeselect}
@@ -252,7 +277,17 @@ export default function BookingPage() {
 
                 {error && (
                   <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                    {error}
+                    <div className="flex items-center justify-between">
+                      <span>{error}</span>
+                      {error.includes("seats are no longer available") && (
+                        <button
+                          onClick={handleRefreshSeats}
+                          className="ml-4 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        >
+                          Refresh Seats
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
 

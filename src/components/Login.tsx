@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -13,31 +13,48 @@ export default function Login({ onSwitchToSignup }: LoginProps) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { signIn } = useAuth();
+  const { signIn, user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user && !authLoading) {
+      router.push("/shows");
+    }
+  }, [user, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Login: handleSubmit called");
     setLoading(true);
     setError("");
 
-    // Validate email domain
-    if (!email.endsWith("@mahindrauniversity.edu.in")) {
-      setError("Only @mahindrauniversity.edu.in email addresses are allowed");
+    try {
+      // Validate email domain
+      if (!email.endsWith("@mahindrauniversity.edu.in")) {
+        console.log("Login: Invalid email domain");
+        setError("Only @mahindrauniversity.edu.in email addresses are allowed");
+        return;
+      }
+
+      console.log("Login: Calling signIn");
+      const { error } = await signIn(email, password);
+      console.log("Login: signIn returned:", { error: !!error });
+
+      if (error) {
+        console.error("Sign in error:", error);
+        setError(error.message);
+      } else {
+        console.log("Login: Sign in successful, waiting for auth state change");
+        // Don't redirect here - let the useEffect handle it when user state updates
+      }
+    } catch (err) {
+      console.error("Login: Unexpected error:", err);
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
       setLoading(false);
-      return;
+      console.log("Login: handleSubmit completed");
     }
-
-    const { error } = await signIn(email, password);
-
-    if (error) {
-      console.error("Sign in error:", error);
-      setError(error.message);
-    } else {
-      router.push("/shows");
-    }
-
-    setLoading(false);
   };
 
   return (
@@ -94,10 +111,10 @@ export default function Login({ onSwitchToSignup }: LoginProps) {
           <div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || authLoading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading || authLoading ? "Signing in..." : "Sign in"}
             </button>
           </div>
 

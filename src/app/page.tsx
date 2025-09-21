@@ -39,6 +39,12 @@ export default function Home() {
                   Browse Shows
                 </Link>
                 <Link
+                  href="/bookings"
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                >
+                  My Bookings
+                </Link>
+                <Link
                   href="/admin"
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                 >

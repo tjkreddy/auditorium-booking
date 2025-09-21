@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 // GET /api/bookings - Get user's bookings
 export async function GET(request: NextRequest) {
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data: bookings, error } = await supabase
+    const { data: bookings, error } = await supabaseAdmin
       .from("bookings")
       .select(
         `
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     // Start a transaction-like operation
     // First, verify all seats are still reserved by this user
-    const { data: seats, error: seatsError } = await supabase
+    const { data: seats, error: seatsError } = await supabaseAdmin
       .from("seats")
       .select("id, show_id, price, status, user_id")
       .in("id", seatIds);
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
       total_amount: seats.find((s) => s.id === seatId)?.price || 0,
     }));
 
-    const { data: bookings, error: bookingError } = await supabase
+    const { data: bookings, error: bookingError } = await supabaseAdmin
       .from("bookings")
       .insert(bookingInserts)
       .select();
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update seats to booked status
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from("seats")
       .update({
         status: "booked",

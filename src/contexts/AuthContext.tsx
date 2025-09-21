@@ -38,16 +38,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    console.log("AuthContext: Getting initial session...");
+    supabase.auth
+      .getSession()
+      .then(({ data: { session }, error }) => {
+        console.log("AuthContext: Initial session result:", {
+          session: !!session,
+          error,
+        });
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("AuthContext: Error getting initial session:", err);
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+      });
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("AuthContext: Auth state change:", event, {
+        session: !!session,
+      });
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -83,8 +99,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, name?: string) => {
+    console.log("AuthContext: signUp called with email:", email);
     // Validate email domain server-side
     if (!email.endsWith("@mahindrauniversity.edu.in")) {
+      console.log("AuthContext: Invalid email domain");
       return {
         error: {
           message:
@@ -93,22 +111,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
-    // For development, disable email confirmation
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name: name || email.split("@")[0],
-        },
-      },
-    });
-    return { error };
+    console.log("AuthContext: Calling supabase.auth.signUp");
+    try {
+      const result = await Promise.race([
+        supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name: name || email.split("@")[0],
+            },
+          },
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Sign up timeout")), 30000)
+        ),
+      ]);
+      console.log("AuthContext: signUp result:", {
+        data: !!result.data,
+        error: result.error,
+      });
+      return { error: result.error };
+    } catch (err) {
+      console.error("AuthContext: signUp error:", err);
+      return {
+        error: {
+          message: err instanceof Error ? err.message : "Sign up failed",
+        } as AuthError,
+      };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
+    console.log("AuthContext: signIn called with email:", email);
     // Validate email domain server-side
     if (!email.endsWith("@mahindrauniversity.edu.in")) {
+      console.log("AuthContext: Invalid email domain");
       return {
         error: {
           message:
@@ -117,11 +155,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    console.log("AuthContext: Calling supabase.auth.signInWithPassword");
+    try {
+      const result = await Promise.race([
+        supabase.auth.signInWithPassword({
+          email,
+          password,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Sign in timeout")), 30000)
+        ),
+      ]);
+      console.log("AuthContext: signIn result:", {
+        data: !!result.data,
+        error: result.error,
+      });
+      return { error: result.error };
+    } catch (err) {
+      console.error("AuthContext: signIn error:", err);
+      return {
+        error: {
+          message: err instanceof Error ? err.message : "Sign in failed",
+        } as AuthError,
+      };
+    }
   };
 
   const signInWithProvider = async (provider: "google" | "microsoft") => {

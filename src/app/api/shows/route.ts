@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 // Helper function to check if user is admin
 async function checkAdminStatus(request: NextRequest) {
@@ -32,7 +33,7 @@ async function checkAdminStatus(request: NextRequest) {
 // GET /api/shows - Get all shows
 export async function GET() {
   try {
-    const { data: shows, error } = await supabase
+    const { data: shows, error } = await supabaseAdmin
       .from("shows")
       .select("*")
       .order("show_date", { ascending: true });
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert the show
-    const { data: show, error: showError } = await supabase
+    const { data: show, error: showError } = await supabaseAdmin
       .from("shows")
       .insert({
         title,
@@ -101,9 +102,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize seats for the show
-    const { error: seatsError } = await supabase.rpc("initialize_show_seats", {
-      p_show_id: show.id,
-    });
+    const { error: seatsError } = await supabaseAdmin.rpc(
+      "initialize_show_seats",
+      {
+        p_show_id: show.id,
+      }
+    );
 
     if (seatsError) {
       console.error("Error initializing seats:", seatsError);

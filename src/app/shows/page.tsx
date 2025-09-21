@@ -62,6 +62,12 @@ export default function Shows() {
               </h1>
               <div className="flex items-center space-x-4">
                 <Link
+                  href="/bookings"
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm"
+                >
+                  My Bookings
+                </Link>
+                <Link
                   href="/admin"
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
                 >

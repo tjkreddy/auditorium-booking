@@ -27,7 +27,7 @@ interface Booking {
 }
 
 export default function BookingsPage() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -69,25 +69,85 @@ export default function BookingsPage() {
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <header className="bg-white shadow-sm">
-          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-red-600">MU Audi Booking</h1>
-            <Link
-              href="/shows"
-              className="flex items-center text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="mr-2" size={16} />
-              Back to Shows
-            </Link>
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex justify-between items-center mb-4">
+              <h1 className="text-2xl font-bold text-red-600">
+                MU Audi Booking
+              </h1>
+              <Link
+                href="/shows"
+                className="flex items-center text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="mr-2" size={16} />
+                Back to Shows
+              </Link>
+            </div>
+            {user && (
+              <div className="flex justify-between items-center text-sm text-gray-600 border-t pt-4">
+                <div>
+                  <span className="font-medium">Welcome:</span>{" "}
+                  {user.user_metadata?.name || user.email}
+                </div>
+                <div>
+                  <span className="font-medium">Session ID:</span>{" "}
+                  {session?.access_token
+                    ? `${session.access_token.slice(0, 8)}...`
+                    : "N/A"}
+                </div>
+              </div>
+            )}
           </div>
         </header>
 
         <main className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                My Bookings
-              </h1>
-              <p className="text-gray-600">View all your auditorium bookings</p>
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    My Bookings
+                  </h1>
+                  <p className="text-gray-600">
+                    View all your auditorium bookings
+                  </p>
+                </div>
+                <button
+                  onClick={fetchBookings}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                  disabled={loading}
+                >
+                  {loading ? "Refreshing..." : "Refresh"}
+                </button>
+              </div>
+
+              {bookings.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-white rounded-lg shadow p-4">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {bookings.length}
+                    </div>
+                    <div className="text-sm text-gray-600">Total Bookings</div>
+                  </div>
+                  <div className="bg-white rounded-lg shadow p-4">
+                    <div className="text-2xl font-bold text-green-600">
+                      ₹
+                      {bookings.reduce(
+                        (sum, booking) => sum + booking.total_amount,
+                        0
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-600">Total Spent</div>
+                  </div>
+                  <div className="bg-white rounded-lg shadow p-4">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {bookings.filter((b) => b.status === "confirmed").length}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Confirmed Bookings
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {error && (
